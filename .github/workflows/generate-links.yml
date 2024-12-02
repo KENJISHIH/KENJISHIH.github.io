@@ -16,7 +16,9 @@ jobs:
         run: |
           echo "<!DOCTYPE html><html><head><title>所有 SingleFile 頁面</title></head><body><h1>所有 SingleFile 頁面</h1><ul>" > links.html
           for file in $(find . -name "*.html" -not -name "links.html"); do
-            echo "<li><a href='$file'>$(basename $file)</a></li>" >> links.html
+            encoded_url=$(echo "$file" | jq -Rr @uri) # 將文件名進行 URL 編碼
+            name=$(basename "$file")
+            echo "<li><a href='$encoded_url'>$name</a></li>" >> links.html
           done
           echo "</ul></body></html>" >> links.html
 
