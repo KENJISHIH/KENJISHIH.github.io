@@ -16,10 +16,13 @@ jobs:
         run: |
           echo "<!DOCTYPE html><html><head><title>所有 SingleFile 頁面</title></head><body><h1>所有 SingleFile 頁面</h1><ul>" > links.html
           for dir in $(find . -type d -name "20*"); do
-            echo "<h2>${dir}</h2><ul>" >> links.html
+            dir_name=$(basename "$dir")
+            echo "<h2>${dir_name}</h2><ul>" >> links.html
             for file in $(find $dir -type f -name "*.html"); do
-              url=$(echo $file | jq -Rr @uri)
-              name=$(basename "$file" | sed 's/[^a-zA-Z0-9._-]/_/g') # 替換特殊字元
+              # 使用 URL 編碼處理文件路徑
+              url=$(echo $file | sed 's/ /%20/g' | jq -Rr @uri)
+              # 將文件名提取並替換特殊字元為 "_"
+              name=$(basename "$file" | sed 's/[^a-zA-Z0-9._-]/_/g')
               echo "<li><a href='$url'>$name</a></li>" >> links.html
             done
             echo "</ul>" >> links.html
