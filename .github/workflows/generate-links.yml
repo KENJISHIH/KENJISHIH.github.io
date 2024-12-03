@@ -1,40 +1,13 @@
-name: Generate Links Page
+echo "<!DOCTYPE html><html><head><title>所有 SingleFile 頁面</title><style>ul { list-style: none; padding: 0; } li { margin: 5px 0; } a { text-decoration: none; color: #007bff; } a:hover { text-decoration: underline; }</style></head><body><h1>所有 SingleFile 頁面</h1><ul>" > links.html
 
-on:
-  push:
-    branches:
-      - main
+for dir in $(find . -type d -name "20*"); do
+  echo "<h2>${dir}</h2><ul>" >> links.html
+  for file in $(find $dir -type f -name "*.html"); do
+    url=$(realpath --relative-to=. "$file" | jq -Rr @uri)
+    name=$(basename "$file" | sed 's/[^a-zA-Z0-9._-]/_/g' | sed 's/ /_/g' | sed 's/_html$/.html/')
+    echo "<li><a href='$url'>$name</a></li>" >> links.html
+  done
+  echo "</ul>" >> links.html
+done
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Generate links.html with folder structure
-        run: |
-          echo "<!DOCTYPE html><html><head><title>所有 SingleFile 頁面</title></head><body><h1>所有 SingleFile 頁面</h1><ul>" > links.html
-          for dir in $(find . -type d -name "20*"); do
-            dir_name=$(basename "$dir")
-            echo "<h2>${dir_name}</h2><ul>" >> links.html
-            for file in $(find $dir -type f -name "*.html"); do
-              # 使用 URL 編碼處理文件路徑
-              url=$(echo $file | sed 's/ /%20/g' | jq -Rr @uri)
-              # 將文件名提取並替換特殊字元為 "_"
-              name=$(basename "$file" | sed 's/[^a-zA-Z0-9._-]/_/g')
-              echo "<li><a href='$url'>$name</a></li>" >> links.html
-            done
-            echo "</ul>" >> links.html
-          done
-          echo "</ul></body></html>" >> links.html
-
-      - name: Commit and push changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add links.html
-          git commit -m "Update links.html with folder structure"
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git main
+echo "</ul></body></html>" >> links.html
