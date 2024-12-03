@@ -14,16 +14,28 @@ jobs:
 
       - name: Generate links.html with folder structure
         run: |
-          echo "<!DOCTYPE html><html><head><title>所有 SingleFile 頁面</title></head><body><h1>所有 SingleFile 頁面</h1><ul>" > links.html
+          echo "<!DOCTYPE html><html><head><title>所有 SingleFile 頁面</title>" > links.html
+          echo "<style>" >> links.html
+          echo "ul { list-style: none; padding: 0; }" >> links.html
+          echo "li { margin: 5px 0; }" >> links.html
+          echo "a { text-decoration: none; color: #007bff; }" >> links.html
+          echo "a:hover { text-decoration: underline; }" >> links.html
+          echo "</style></head><body><h1>所有 SingleFile 頁面</h1><ul>" >> links.html
+
           for dir in $(find . -type d -name "20*"); do
-            echo "<h2>${dir}</h2><ul>" >> links.html
-            for file in $(find $dir -type f -name "*.html"); do
-              url=$(echo $file | jq -Rr @uri)
-              name=$(basename "$file" | sed 's/[^a-zA-Z0-9._-]/_/g') # 替換特殊字元
-              echo "<li><a href='$url'>$name</a></li>" >> links.html
+            dir_name=$(basename "$dir")
+            echo "<h2>${dir_name}</h2><ul>" >> links.html
+            for file in $(find "$dir" -type f -name "*.html"); do
+              # 修正文件名和 URL
+              clean_name=$(basename "$file" | sed 's/[^a-zA-Z0-9._-]/_/g' | sed 's/ /_/g' | sed 's/_html$/.html/')
+              clean_url=$(realpath --relative-to=. "$file" | jq -Rr @uri)
+              
+              # 輸出到 links.html
+              echo "<li><a href='$clean_url'>$clean_name</a></li>" >> links.html
             done
             echo "</ul>" >> links.html
           done
+
           echo "</ul></body></html>" >> links.html
 
       - name: Commit and push changes
