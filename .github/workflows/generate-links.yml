@@ -18,9 +18,10 @@ jobs:
           for dir in $(find . -type d -name "20*"); do
             echo "<h2>${dir}</h2><ul>" >> links.html
             for file in $(find $dir -type f -name "*.html"); do
-              name=$(basename "$file" | sed 's/[^a-zA-Z0-9._-]/_/g') # 替換特殊字符為 "_"
-              url=$(echo $file | jq -Rr @uri)
-              echo "<li><a href='$url'>$name</a></li>" >> links.html
+              name=$(basename "$file" | sed 's/[^a-zA-Z0-9._-]/_/g') # 清理特殊字符
+              url=$(echo $file | jq -Rr @uri) # URL 編碼處理
+              clean_dir=$(echo $dir | sed 's/^\.\///') # 移除路徑前的 "./"
+              echo "<li><a href='$url'>${clean_dir}/${name}</a></li>" >> links.html
             done
             echo "</ul>" >> links.html
           done
