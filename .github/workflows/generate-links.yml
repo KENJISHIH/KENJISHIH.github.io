@@ -18,8 +18,8 @@ jobs:
           for dir in $(find . -type d -name "20*"); do
             echo "<h2>${dir}</h2><ul>" >> links.html
             for file in $(find $dir -type f -name "*.html"); do
+              name=$(basename "$file" | sed 's/[^a-zA-Z0-9._-]/_/g') # 替換特殊字符為 "_"
               url=$(echo $file | jq -Rr @uri)
-              name=$(basename "$file")
               echo "<li><a href='$url'>$name</a></li>" >> links.html
             done
             echo "</ul>" >> links.html
