@@ -1,13 +1,33 @@
-echo "<!DOCTYPE html><html><head><title>所有 SingleFile 頁面</title><style>ul { list-style: none; padding: 0; } li { margin: 5px 0; } a { text-decoration: none; color: #007bff; } a:hover { text-decoration: underline; }</style></head><body><h1>所有 SingleFile 頁面</h1><ul>" > links.html
+name: Generate Links Page
 
-for dir in $(find . -type d -name "20*"); do
-  echo "<h2>${dir}</h2><ul>" >> links.html
-  for file in $(find $dir -type f -name "*.html"); do
-    url=$(realpath --relative-to=. "$file" | jq -Rr @uri)
-    name=$(basename "$file" | sed 's/[^a-zA-Z0-9._-]/_/g' | sed 's/ /_/g' | sed 's/_html$/.html/')
-    echo "<li><a href='$url'>$name</a></li>" >> links.html
-  done
-  echo "</ul>" >> links.html
-done
+on:
+  push:
+    branches:
+      - main
 
-echo "</ul></body></html>" >> links.html
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Generate links.html
+        run: |
+          echo "<!DOCTYPE html><html><head><title>所有 SingleFile 頁面</title></head><body><h1>所有 SingleFile 頁面</h1><ul>" > links.html
+          for file in $(find . -name "*.html" -not -name "links.html"); do
+            encoded_url=$(echo "$file" | jq -Rr @uri) # 將文件名進行 URL 編碼
+            name=$(basename "$file")
+            echo "<li><a href='$encoded_url'>$name</a></li>" >> links.html
+          done
+          echo "</ul></body></html>" >> links.html
+
+      - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add links.html
+          git commit -m "Update links.html"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git main
